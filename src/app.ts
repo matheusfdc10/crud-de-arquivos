@@ -22,4 +22,5 @@ app.use('/getfile', getFileRouter)
 app.use('/deletefile', deleteFile)
 app.use('/updatefile', updateFileRouter)
 
+app.disable('etag')
 app.use('/teste', teste)
