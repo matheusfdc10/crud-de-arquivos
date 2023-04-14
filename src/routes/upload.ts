@@ -44,11 +44,10 @@ uploadRouter.post('/', async (req: any, res: any) => {
 
     await Promise.all(promises)
 
-    res.json({
+    return res.status(200).json({
         idsArquivosSalvos,
         quantidadeErroGravacao,
         quantidadeErroInesperado,
         quantidadeErroObjArquivoInvalido
     })
-
 })

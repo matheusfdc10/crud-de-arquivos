@@ -97,13 +97,16 @@ export class ArquivoController {
         const _id = new ObjectId(id);
         const bucket = this._inicializarBucket();
         const resultados = await bucket.find({ _id: _id }).toArray();
+
         if (resultados.length > 0) {
           const metadados = resultados[0];
           const streamGridFS = bucket.openDownloadStream(_id);
+
           const caminhoArquivo = join(
             this._caminhoDiretorioArquivos,
             metadados["filename"]
           );
+
           const streamGravacao = createWriteStream(caminhoArquivo);
           streamGridFS
             .pipe(streamGravacao)
@@ -128,7 +131,9 @@ export class ArquivoController {
       if (id && id.length == 24) {
         const _id = new ObjectId(id);
         const bucket = this._inicializarBucket();
+        
         const resultados = await bucket.find({ _id: _id }).toArray();
+
         if (resultados.length > 0) {
           bucket.delete(_id, (err) => {
             if (err) {
@@ -155,29 +160,29 @@ export class ArquivoController {
           const nomeArquivo = objArquivo["name"];
           const conteudoArquivo = objArquivo["data"];
 
-          const response = bucket.find({ _id: _id });
+          const response = await bucket.find({ _id: _id }).toArray()
 
-          if (!response) {
-            reject("id não encontrado");
+          if (response.length !== 1) {
+            reject(`Arquivo com id ${_id} não encrontrado`);
           }
 
           bucket.delete(_id, (err) => {
             if (err) {
-              reject("id não encontrado");
+              reject("Erro ao tentar deletar arquivo");
             }
 
             const caminhoArquivoTemp = join(
               this._caminhoDiretorioArquivos,
               nomeArquivo
             );
+
             writeFileSync(caminhoArquivoTemp, conteudoArquivo);
             const streamLeitura = createReadStream(caminhoArquivoTemp);
 
             const streamGridFS = bucket.openUploadStreamWithId(
               _id,
               nomeArquivo,
-              {
-                metadata: {
+              { metadata: {
                   mimetype: objArquivo["mimetype"],
                 },
               }
