@@ -8,6 +8,7 @@ import { downloadRouter } from './routes/download'
 import { getFileRouter } from './routes/getFile'
 import { deleteFile } from './routes/deleteFile'
 import { updateFileRouter } from './routes/updateFile'
+import { teste } from './routes/teste'
 
 export const app = express()
 
@@ -20,3 +21,5 @@ app.use('/download', downloadRouter)
 app.use('/getfile', getFileRouter)
 app.use('/deletefile', deleteFile)
 app.use('/updatefile', updateFileRouter)
+
+app.use('/teste', teste)
