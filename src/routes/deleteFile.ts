@@ -1,5 +1,4 @@
 import { Router } from 'express'
-import { unlinkSync } from 'fs'
 import { ErroDownload, ArquivoController } from '../controllers/ArquivoController';
 
 export const deleteFile = Router()
