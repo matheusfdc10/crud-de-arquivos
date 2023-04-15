@@ -1,24 +1,8 @@
-// import mongoose from 'mongoose'
 import { load } from 'ts-dotenv'
-
-// import { app } from '../app'
 
 const env = load({
     URI_BD: String
 })
-
-// export const conectarNoBD = async () => {
-//     mongoose.set("strictQuery", true);
-//     await mongoose.connect(env.URI_BD)
-//         .then((conexao) => {
-//             app.locals.bd = conexao.connection
-//             // console.log(conexao)
-//             console.log('conectado ao banco')
-//         })
-//         .catch(err => {
-//             console.log(err)
-//         })
-
 
 import { MongoClient } from 'mongodb'
 

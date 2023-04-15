@@ -10,7 +10,7 @@ downloadRouter.get('/:id', async (req, res) => {
 
     const bd = req.app.locals.bd
     const arquivoCtrl = new ArquivoController(bd)
-
+    
     try {
         const caminhoArquivo = await arquivoCtrl.realizarDownload(id)
         return res.download(caminhoArquivo, () => {

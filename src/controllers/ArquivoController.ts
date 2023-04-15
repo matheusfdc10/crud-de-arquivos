@@ -23,7 +23,7 @@ export enum ErroDownload {
 export class ArquivoController {
   private _bd: Db;
   private _caminhoDiretorioArquivos: string;
-
+  
   constructor(bd: Db) {
     this._bd = bd;
     this._caminhoDiretorioArquivos = join(
@@ -96,9 +96,14 @@ export class ArquivoController {
       if (id && id.length == 24) {
         const _id = new ObjectId(id);
         const bucket = this._inicializarBucket();
-        const resultados = await bucket.find({ _id: _id }).toArray();
 
-        if (resultados.length > 0) {
+        try {
+          const resultados = await bucket.find({ _id: _id }).toArray();
+
+          if (resultados.length === 0) {
+            reject(ErroDownload.NENHUM_ARQUIVO_ENCONTRADO);
+          }
+
           const metadados = resultados[0];
           const streamGridFS = bucket.openDownloadStream(_id);
 
@@ -108,6 +113,8 @@ export class ArquivoController {
           );
 
           const streamGravacao = createWriteStream(caminhoArquivo);
+
+          // console.log(metadados)
           streamGridFS
             .pipe(streamGravacao)
             .on("finish", () => {
@@ -117,8 +124,8 @@ export class ArquivoController {
               console.log(erro);
               reject(ErroDownload.NAO_FOI_POSSIVEL_GRAVAR);
             });
-        } else {
-          reject(ErroDownload.NENHUM_ARQUIVO_ENCONTRADO);
+        } catch(erro) {
+          reject('Erro ao buscar arquivo');
         }
       } else {
         reject(ErroDownload.ID_INVALIDO);
@@ -131,18 +138,23 @@ export class ArquivoController {
       if (id && id.length == 24) {
         const _id = new ObjectId(id);
         const bucket = this._inicializarBucket();
-        
-        const resultados = await bucket.find({ _id: _id }).toArray();
 
-        if (resultados.length > 0) {
+        try {
+          const resultados = await bucket.find({ _id: _id }).toArray();
+
+          if (resultados.length === 0) {
+            reject(ErroDownload.NENHUM_ARQUIVO_ENCONTRADO);
+          }
+
           bucket.delete(_id, (err) => {
             if (err) {
               reject(err);
             }
             resolve(id);
           });
-        } else {
-          reject(ErroDownload.NENHUM_ARQUIVO_ENCONTRADO);
+        } catch(erro) {
+          console.log(erro)
+          reject('Erro ao tentar excluir arquivo');
         }
       } else {
         reject(ErroDownload.ID_INVALIDO);
@@ -160,44 +172,49 @@ export class ArquivoController {
           const nomeArquivo = objArquivo["name"];
           const conteudoArquivo = objArquivo["data"];
 
-          const response = await bucket.find({ _id: _id }).toArray()
+          try {
+            const response = await bucket.find({ _id: _id }).toArray()
 
-          if (response.length !== 1) {
-            reject(`Arquivo com id ${_id} não encrontrado`);
-          }
-
-          bucket.delete(_id, (err) => {
-            if (err) {
-              reject("Erro ao tentar deletar arquivo");
+            if (response.length !== 1) {
+              reject(`Arquivo com id ${_id} não encrontrado`);
             }
 
-            const caminhoArquivoTemp = join(
-              this._caminhoDiretorioArquivos,
-              nomeArquivo
-            );
-
-            writeFileSync(caminhoArquivoTemp, conteudoArquivo);
-            const streamLeitura = createReadStream(caminhoArquivoTemp);
-
-            const streamGridFS = bucket.openUploadStreamWithId(
-              _id,
-              nomeArquivo,
-              { metadata: {
-                  mimetype: objArquivo["mimetype"],
-                },
+            bucket.delete(_id, (err) => {
+              if (err) {
+                reject("Erro ao tentar deletar arquivo");
               }
-            );
 
-            streamLeitura
-              .pipe(streamGridFS)
-              .on("finish", function () {
-                resolve({_id , caminhoArquivoTemp});
-              })
-              .on("error", function (error) {
-                console.error(error);
-                reject("erro ao tentar atualizar");
-              });
-          });
+              const caminhoArquivoTemp = join(
+                this._caminhoDiretorioArquivos,
+                nomeArquivo
+              );
+
+              writeFileSync(caminhoArquivoTemp, conteudoArquivo);
+              const streamLeitura = createReadStream(caminhoArquivoTemp);
+
+              const streamGridFS = bucket.openUploadStreamWithId(
+                _id,
+                nomeArquivo,
+                { metadata: {
+                    mimetype: objArquivo["mimetype"],
+                  },
+                }
+              );
+
+              streamLeitura
+                .pipe(streamGridFS)
+                .on("finish", function () {
+                  resolve({_id , caminhoArquivoTemp});
+                })
+                .on("error", function (error) {
+                  console.error(error);
+                  reject("erro ao tentar atualizar");
+                });
+            });
+
+          } catch(erro) {
+            reject(`Erro ao tentar atualizar o qrauivo com id ${_id}`);
+          }
         } else {
           reject(ErroUpload.OBJETO_ARQUIVO_INVALIDO);
         }
